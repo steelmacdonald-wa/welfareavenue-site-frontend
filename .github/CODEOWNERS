@@ -1,0 +1,9 @@
+# Welfare Avenue website: changes to these files always need Steel's review, because they keep the site safe and
+# wired to the Hub. GitHub asks him automatically on any pull request that touches them.
+/site/_headers @steelmacdonald-wa
+/site/_redirects @steelmacdonald-wa
+/site/assets/*.js @steelmacdonald-wa
+/tools/ @steelmacdonald-wa
+/netlify.toml @steelmacdonald-wa
+/.github/ @steelmacdonald-wa
+/AGENTS.md @steelmacdonald-wa

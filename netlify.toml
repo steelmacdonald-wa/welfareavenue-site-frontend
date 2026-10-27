@@ -1,0 +1,9 @@
+# Welfare Avenue website: how Netlify publishes this repository.
+# Netlify publishes the site folder. Before each publish (and each pull request preview) it sets the cache stamps
+# and runs the house-rule checks: if a check fails, nothing is published and the live site stays as it was.
+[build]
+  publish = "site"
+  command = "node tools/stamp.mjs site && node tools/check.mjs site --stamped"
+
+[build.environment]
+  NODE_VERSION = "22"

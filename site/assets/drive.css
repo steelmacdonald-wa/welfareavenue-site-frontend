@@ -1,0 +1,87 @@
+/* Welfare Avenue website: campaign pages (15/10/26, the Holiday Gift Basket Drive page, /gift-basket-drive/ and
+   /fr/paniers-cadeaux/). Loaded only by those pages, after site.css; reuses its tokens. No inline styles (CSP). */
+.drp{display:grid;gap:40px;align-items:stretch}
+@media (min-width:900px){.drp{grid-template-columns:1fr 1fr;gap:64px}}
+.drp-goal{align-self:center}
+.drp-big{margin:0;font-family:var(--hf);font-weight:600;font-size:clamp(72px,9vw,120px);line-height:.95;color:var(--green);letter-spacing:-.5px}
+.drp-big+p{margin:10px 0 0;font-family:var(--hf);font-weight:600;font-size:clamp(22px,2.2vw,28px);line-height:1.2;color:var(--green);max-width:18em}
+.drp-goal .fine{margin:18px 0 0}
+.drp-card{background:var(--sand);border-top:4px solid var(--gold);padding:30px 30px 28px;display:flex;flex-direction:column}
+.drp-card .over{margin-bottom:8px}
+.drp-raised{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.drp-raised b{font-family:var(--hf);font-weight:600;font-size:clamp(46px,5vw,60px);line-height:1;color:var(--green)}
+.drp-raised span{font-family:var(--hf);font-weight:600;font-size:21px;color:var(--green)}
+.drp-people{margin:12px 0 0;font-size:16px}
+.drp-bar{position:relative;height:12px;margin:18px 0 6px;background:rgba(16,63,57,.12);overflow:hidden}
+.drp-bar[hidden]{display:none}
+.drp-bar span{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--green);transition:width .8s ease}
+.drp-card .btn{width:100%;justify-content:center;margin-top:24px}
+.drp-card .fine{margin:14px 0 0}
+.drt{list-style:none;margin:0;padding:0;display:grid;gap:24px;counter-reset:drt}
+@media (min-width:860px){.drt{grid-template-columns:repeat(3,1fr);gap:28px}}
+.drt li{counter-increment:drt;border-top:1px solid var(--rule);padding-top:20px}
+.drt li::before{content:counter(drt,decimal-leading-zero);display:block;font-family:var(--hf);font-weight:600;font-size:18px;color:var(--gold);margin-bottom:6px}
+.drt h3{margin:0 0 8px;font-size:26px}
+.drt p{margin:0}
+.drg{grid-template-columns:repeat(2,1fr)}
+.drg button:last-child{grid-column:1 / -1}
+.drg button:last-child img{aspect-ratio:4/3}
+@media (min-width:860px){.drg{grid-template-columns:repeat(5,1fr)}.drg button:last-child{grid-column:auto}.drg img,.drg button:last-child img{aspect-ratio:3/4}}
+.drw .way p+p{margin-top:12px}
+.drw .way .fine{font-size:14px}
+/* gl: "what your gift provides" (17/10/26, gbd_gift_ladder.py): a cream band of six gift tags after "Three ways to get involved".
+   A tag is the li: ::before draws its outline (the tag's shape, cut corners and the hole), ::after its paper and the gold
+   eyelet; the "Give" link covers the whole tag (a::after), so the tag is one click and one tab stop, and the focus ring
+   sits on the tag. Three columns from 900px, two from 600px, one on a phone (a tag on its side, the hole on the left). */
+.on-cream{background:var(--cream)}
+.gl-head{position:relative;max-width:800px;margin:0 0 56px}
+.gl-head h2{margin:0 0 14px}
+.gl-head .lede{margin:0;max-width:44em}
+.gl-heart{position:absolute;width:64px;height:auto;left:-80px;top:-20px;transform:rotate(-10deg)}
+@media (max-width:1359px){.gl-heart{position:static;width:52px;margin:0 0 10px -4px}}
+.gtags{list-style:none;margin:0;padding:0;display:grid;gap:22px;grid-template-columns:1fr}
+@media (min-width:600px){.gtags{grid-template-columns:repeat(2,1fr);gap:56px 24px}}
+@media (min-width:900px){.gtags{grid-template-columns:repeat(3,1fr);gap:60px 28px}}
+.gt{--cut:22px;--paper:var(--white);--edge:var(--line);--hx:50%;--hy:28px;position:relative;isolation:isolate;display:flex;flex-direction:column;
+  padding:62px 28px 26px;color:var(--ink);transition:transform .25s ease}
+.gt::before,.gt::after{content:"";position:absolute;z-index:-1;pointer-events:none}
+.gt::before{inset:0;background:radial-gradient(circle at var(--hx) var(--hy),transparent 0 6px,var(--edge) 6.5px);
+  clip-path:polygon(var(--cut) 0,calc(100% - var(--cut)) 0,100% var(--cut),100% 100%,0 100%,0 var(--cut))}
+.gt::after{inset:1px;background:radial-gradient(circle at var(--hx) calc(var(--hy) - 1px),transparent 0 7px,var(--gold) 7.5px 10px,transparent 10.5px),
+  radial-gradient(circle at var(--hx) calc(var(--hy) - 1px),transparent 0 7px,var(--paper) 7.5px);
+  clip-path:polygon(calc(var(--cut) - .4px) 0,calc(100% - var(--cut) + .4px) 0,100% calc(var(--cut) - .4px),100% 100%,0 100%,0 calc(var(--cut) - .4px))}
+.gt-amt{margin:0;font-family:var(--hf);font-weight:600;font-size:clamp(52px,5vw,66px);line-height:1;color:var(--green);letter-spacing:-.3px}
+.gt-t{margin:14px 0 8px;font-size:clamp(23px,2vw,27px)}
+.gt-d{margin:0;font-size:15.5px;line-height:1.55}
+.gt-go{display:inline-flex;align-items:center;gap:10px;margin-top:auto;padding-top:22px;font-family:var(--hf);font-weight:600;font-size:20px;
+  line-height:1.1;color:var(--green);text-decoration:none}
+.gt-go .ar{width:18px;height:14px;flex:none;transition:transform .25s ease}
+.gt-go::after{content:"";position:absolute;inset:0;z-index:1}
+.gt-go:focus-visible{outline:0}
+.gt:focus-within{outline:3px solid var(--gold);outline-offset:4px}
+.gt-go:hover{text-decoration:none}
+@media (hover:hover){.gt:hover{transform:translateY(-4px) rotate(-.8deg)}.gt:hover .gt-go{text-decoration:underline;text-decoration-color:var(--gold)}.gt:hover .gt-go .ar{transform:translateX(4px)}}
+.gt-top{--paper:var(--green);--edge:var(--green);color:var(--white)}
+.gt-top .gt-amt{color:var(--gold)}
+.gt-top .gt-t,.gt-top .gt-go{color:var(--white)}
+.gt-str{position:absolute;left:calc(var(--hx) - 20px);top:calc(var(--hy) - 60px);width:40px;height:64px;z-index:1;pointer-events:none;overflow:visible}
+.gt-str path{fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.gt-star{position:absolute;right:-14px;top:-24px;width:64px;height:auto;transform:rotate(12deg);z-index:2;pointer-events:none}
+.gl-foot{margin-top:36px;display:grid;gap:14px;max-width:760px}
+.gl-foot .textlink{font-size:16px}
+.gl-foot .fine{margin:0}
+@media (max-width:599px){
+  .gt{--cut:20px;--hx:27px;--hy:50%;padding:20px 20px 22px 58px;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}
+  .gt>*{grid-column:1 / -1}
+  .gt>.gt-amt{grid-column:1;grid-row:1}
+  .gt>.gt-go{grid-column:2;grid-row:1;padding-top:0;margin:0}
+  .gt-str{display:none}
+  .gt-gm{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .gt::before{clip-path:polygon(var(--cut) 0,100% 0,100% 100%,var(--cut) 100%,0 calc(100% - var(--cut)),0 var(--cut))}
+  .gt::after{background:radial-gradient(circle at calc(var(--hx) - 1px) 50%,transparent 0 7px,var(--gold) 7.5px 10px,transparent 10.5px),
+    radial-gradient(circle at calc(var(--hx) - 1px) 50%,transparent 0 7px,var(--paper) 7.5px);
+    clip-path:polygon(calc(var(--cut) - .4px) 0,100% 0,100% 100%,calc(var(--cut) - .4px) 100%,0 calc(100% - var(--cut) + .4px),0 calc(var(--cut) - .4px))}
+  .gt-amt{font-size:46px}
+  .gt-t{margin:10px 0 6px;font-size:23px}
+  .gt-star{right:-6px;top:-20px;width:52px}
+}

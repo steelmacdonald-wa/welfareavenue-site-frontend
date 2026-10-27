@@ -1,0 +1,1 @@
+Read AGENTS.md at the root of this repository before any change. It is the brief for this website: how it is built, what is wired to the Hub, the rules that cannot be broken and the steps for every change.
