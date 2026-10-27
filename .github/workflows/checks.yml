@@ -1,0 +1,25 @@
+# Welfare Avenue website: the Site checks, on every pull request and every push to main.
+name: Site checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cache stamps (set the way the publish step sets them)
+        run: node tools/stamp.mjs site --check && node tools/stamp.mjs site
+      - name: House rules
+        run: node tools/check.mjs site --stamped
+      - name: Install the browser check
+        run: npm ci --prefix tools && npx --prefix tools playwright install --with-deps chromium
+      - name: Every page in a browser, at computer and phone widths
+        run: node tools/browser-check.mjs site
