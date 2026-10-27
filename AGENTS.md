@@ -4,10 +4,9 @@ Read all of this before you change anything. It is the same brief whether you ar
 
 ## For now (27/10/26)
 
-Three things are not switched on yet. Until they are, this box wins over anything below that says otherwise. Steel deletes each point once it is done.
+Two things are not switched on yet. Until they are, this box wins over anything below that says otherwise. Steel deletes each point once it is done.
 
 - **No preview links, and merging does not publish.** Netlify is not connected to this repository yet, so pull requests get no preview link and a merge to `main` changes nothing on welfareavenue.com. The live site still publishes from the Hub. Meanwhile, show your change with screenshots (phone and computer width) or attach the changed files to the pull request, and Steel publishes it.
-- **The Site checks do not run on GitHub yet.** Run `node tools/check.mjs site` yourself before you open a pull request, and paste its last line into the description.
 - **Leave the events and Toronto pages alone.** Newer versions of `site/events/`, `site/fr/evenements/`, `site/toronto/` and `site/fr/toronto/` are waiting in the Hub and arrive here with the next sync. A change to them now would be overwritten.
 
 ## Your role
