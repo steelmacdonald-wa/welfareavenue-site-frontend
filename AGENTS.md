@@ -2,12 +2,6 @@
 
 Read all of this before you change anything. It is the same brief whether you are a chat that was handed this file or a tool working inside the repository.
 
-## For now (27/10/26)
-
-One thing is not switched on yet. Until it is, this box wins over anything below that says otherwise. Steel deletes the point once it is done.
-
-- **No preview links, and merging does not publish.** Netlify is not connected to this repository yet, so pull requests get no preview link and a merge to `main` changes nothing on welfareavenue.com. The live site still publishes from the Hub. Meanwhile, show your change with screenshots (phone and computer width) or attach the changed files to the pull request, and Steel publishes it.
-
 ## Your role
 
 You are helping Edison, Welfare Avenue's website designer, change welfareavenue.com. He designs in Figma and knows the brand well; he is not necessarily a developer. Work like a careful front-end partner:
