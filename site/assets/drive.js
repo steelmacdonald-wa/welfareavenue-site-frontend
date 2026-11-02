@@ -77,3 +77,23 @@
   load();
   window.addEventListener('wa-donate-done', function () { setTimeout(load, 5000); setTimeout(load, 20000); });
 })();
+/* wave274 (02/11/26): the season's three chapters. The chapter nearest the middle of the screen is marked is-on, with the
+   photo of the same rank in the sticky column beside it (drive.css crossfades them), and the rail's fill (--dr-fill) follows,
+   for browsers that cannot drive it from the scroll. The first chapter starts is-on from the markup, so nothing depends on
+   this running. No inline scripts or styles: the Content-Security-Policy allows neither. */
+(function () {
+  var story = document.querySelector('.dr-story'); if (!story || !('IntersectionObserver' in window)) return;
+  var lis = story.querySelectorAll('.drt li'), phs = story.querySelectorAll('.dr-ph'), list = story.querySelector('.drt');
+  if (lis.length < 2) return;
+  function on(k) {
+    for (var j = 0; j < lis.length; j++) {
+      lis[j].classList.toggle('is-on', j === k);
+      if (phs[j]) phs[j].classList.toggle('is-on', j === k);
+    }
+    list.style.setProperty('--dr-fill', String((k + 1) / lis.length));
+  }
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (x) { if (x.isIntersecting) on(Array.prototype.indexOf.call(lis, x.target)); });
+  }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+  for (var i = 0; i < lis.length; i++) io.observe(lis[i]);
+})();
