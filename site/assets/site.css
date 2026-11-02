@@ -6,7 +6,7 @@
    No inline styles anywhere: the Content-Security-Policy allows none. */
 :root{--green:#103F39;--deep:#133432;--ink:#1F201E;--muted:#585B57;--cream:#FFFAF2;--white:#FFFFFF;
   --grey:#F3F5F4;--mist:#F8F9F8;--sand:#F7EDD6;--gold:#DCA527;--purple:#6F64AB;--line:#D3D9D6;--rule:rgba(16,63,57,.5);
-  --flag:#A8382A;--wrap:1200px;
+  --flag:#A8382A;--wrap:1200px;--ease-out:cubic-bezier(.23,1,.32,1);--ease-in-out:cubic-bezier(.77,0,.175,1);
   --hf:'Barlow Condensed','WA Heading Fallback',sans-serif;--bf:'Space Grotesk','WA Body Fallback',sans-serif}
 /* Fallback faces sized to the brand fonts' widths (measured against Arial, 29/09/26), so text wraps the same while the web
    fonts load and nothing jumps when they arrive: Barlow Condensed is 0.67 of Arial Bold, Space Grotesk 1.10 of Arial. */
@@ -48,8 +48,9 @@ h2+p,h2+.lede,h2+ul,h2+.figs,.over+h2{margin-top:0}
 
 /* Buttons: square, green, with an arrow */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:14px;font-family:var(--hf);font-weight:500;font-size:20px;line-height:1;
-  padding:20px 30px;border:1.5px solid var(--green);background:var(--green);color:var(--white);text-decoration:none;cursor:pointer;border-radius:0;transition:background .15s,color .15s,border-color .15s}
+  padding:20px 30px;border:1.5px solid var(--green);background:var(--green);color:var(--white);text-decoration:none;cursor:pointer;border-radius:0;transition:background .15s,color .15s,border-color .15s,transform .16s var(--ease-out)}
 .btn:hover{background:var(--deep);border-color:var(--deep);text-decoration:none}
+.btn:active,.sq:active{transform:scale(.97)}
 .btn .ar{width:18px;height:14px;flex:none}
 .btn.ghost{background:transparent;color:var(--green)}
 .btn.ghost:hover{background:var(--green);color:var(--white)}
@@ -66,7 +67,7 @@ h2+p,h2+.lede,h2+ul,h2+.figs,.over+h2{margin-top:0}
 .btn.small{font-size:17px;padding:12px 18px;gap:10px;margin:0;color:var(--white)}
 .btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
 @media (max-width:480px){.btn{font-size:19px;padding:18px 24px}}
-.sq{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:var(--green);color:var(--white);flex:none;transition:background .15s}
+.sq{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:var(--green);color:var(--white);flex:none;transition:background .15s,transform .16s var(--ease-out)}
 .sq:hover{background:var(--deep)}
 .sq .ar{width:18px;height:14px}
 .textlink{display:inline-flex;align-items:center;gap:10px;font-size:15px;font-weight:500;text-decoration:none;color:var(--green)}
@@ -256,9 +257,10 @@ section{position:relative}
 .quote figcaption b{font-weight:700}
 
 /* Timeline */
-.timeline{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule);display:grid;gap:24px}
+.timeline{list-style:none;margin:0;padding:0;position:relative;display:grid;gap:24px}
+.timeline::before,.timeline::after{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--rule)}
 .timeline li{padding-left:26px;position:relative}
-.timeline li::before{content:'';position:absolute;left:-6px;top:9px;width:11px;height:11px;background:var(--gold)}
+.timeline li::before{content:'';position:absolute;left:-6px;top:9px;width:11px;height:11px;background:var(--gold);transition:transform .6s var(--ease-out)}
 .timeline .when{font-family:var(--hf);font-weight:600;color:var(--green);font-size:20px}
 .timeline p{margin:2px 0 0}
 
@@ -700,4 +702,36 @@ dialog.signin::backdrop{background:rgba(16,63,57,.55)}
   .nav a{padding:0 9px}
   .nav .side{gap:14px;margin-left:8px;padding-left:14px}
   .top .donate-m{margin-left:14px;padding:12px 16px;font-size:17px}
+}
+/* wave274 (02/11/26, Steel: "make our story feel immersive as the user scrolls"): the scroll reveal. site.js adds .rv to
+   parts of a page below the first screen and .is-in when they scroll into view; without JavaScript nothing is hidden. */
+.rv{opacity:0;transform:translateY(14px);transition:opacity .6s var(--ease-out),transform .6s var(--ease-out);transition-delay:calc(var(--rv-i,0) * 60ms)}
+.rv.is-in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}}
+@media print{.rv{opacity:1;transform:none}}
+/* wave274: the gift basket drive on the home page (after the three ways in), and the growth bars it shares with the drive
+   page: 2024, 2025 and this year's goal, the bars 25, 50 and 100% wide; only the gold fill inside (i) moves, by scaleX. */
+.drive-band .pic img{aspect-ratio:3/4}
+.drive-band .fine .textlink{font-size:15px}
+.dgrow{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:12px;max-width:34em}
+.dgrow li{display:grid;grid-template-columns:3.2em 1fr;column-gap:14px;align-items:center}
+.dg-y{font-family:var(--hf);font-weight:600;font-size:20px;line-height:1;color:var(--green);grid-row:1 / span 2}
+.dg-bar{display:block;height:14px;background:rgba(16,63,57,.1);overflow:hidden}
+.dg-bar i{display:block;height:100%;background:var(--gold);transform-origin:left;transform:scaleX(1);transition:transform .9s var(--ease-out)}
+.dg-25 .dg-bar{width:25%}.dg-50 .dg-bar{width:50%}.dg-100 .dg-bar{width:100%}
+.dg-goal .dg-bar{background:none;border:1.5px solid var(--green)}.dg-goal .dg-bar i{background:var(--green);opacity:.18}
+.dg-n{font-size:15px;color:var(--muted);margin-top:4px}
+.dgrow li.rv:not(.is-in) .dg-bar i{transform:scaleX(0)}
+@media (prefers-reduced-motion:reduce){.dgrow .dg-bar i{transform:none}}
+/* wave274: the About page's "Since 2020" rail fills in gold as the reader reaches each entry (site.js sets --tl-fill), each
+   entry's gold square settling in with its reveal; and on the volunteer page
+   the three "How to join" steps follow each other 120ms apart, a gold line drawing across them on a computer. */
+.timeline::after{width:3px;left:-1px;background:var(--gold);transform-origin:top;transform:scaleY(var(--tl-fill,0));transition:transform .6s var(--ease-out)}
+.timeline li.rv:not(.is-in)::before{transform:scale(.6)}
+@media (prefers-reduced-motion:reduce){.timeline li::before{transform:none}}
+.steps li.rv{transition-delay:calc(var(--rv-i,0) * 120ms)}
+@media (min-width:860px){
+  .steps{position:relative}
+  .steps::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--gold);transform-origin:left;transform:scaleX(0);transition:transform 1.2s var(--ease-out)}
+  .steps.rv-in::before{transform:none}
 }
