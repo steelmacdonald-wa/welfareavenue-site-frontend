@@ -107,7 +107,8 @@
   .dr-story .drt{grid-template-columns:1fr;gap:0;padding-left:28px}
   .dr-story .drt::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:rgba(16,63,57,.12)}
   .dr-story .drt::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);transform-origin:top;transform:scaleY(var(--dr-fill,0));transition:transform .6s var(--ease-out)}
-  .dr-story .drt li{min-height:55vh;border-top:0;padding-top:0;opacity:.45;transition:opacity .6s var(--ease-out)}
+  .dr-story .drt li{min-height:55vh;border-top:0;padding-top:0;transition:opacity .6s var(--ease-out)}
+  .dr-story.dr-live .drt li{opacity:.7}
   .dr-story .drt li.is-on{opacity:1}
   .dr-ph-m{display:none}
   .dr-photos{display:block;position:sticky;top:96px;aspect-ratio:4/3;overflow:hidden}

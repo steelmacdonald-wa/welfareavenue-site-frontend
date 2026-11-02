@@ -708,6 +708,7 @@ dialog.signin::backdrop{background:rgba(16,63,57,.55)}
 .rv{opacity:0;transform:translateY(14px);transition:opacity .6s var(--ease-out),transform .6s var(--ease-out);transition-delay:calc(var(--rv-i,0) * 60ms)}
 .rv.is-in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}}
+@media print{.rv{opacity:1;transform:none}}
 /* wave274: the gift basket drive on the home page (after the three ways in), and the growth bars it shares with the drive
    page: 2024, 2025 and this year's goal, the bars 25, 50 and 100% wide; only the gold fill inside (i) moves, by scaleX. */
 .drive-band .pic img{aspect-ratio:3/4}

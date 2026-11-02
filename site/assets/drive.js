@@ -85,6 +85,7 @@
   var story = document.querySelector('.dr-story'); if (!story || !('IntersectionObserver' in window)) return;
   var lis = story.querySelectorAll('.drt li'), phs = story.querySelectorAll('.dr-ph'), list = story.querySelector('.drt');
   if (lis.length < 2) return;
+  story.classList.add('dr-live');
   function on(k) {
     for (var j = 0; j < lis.length; j++) {
       lis[j].classList.toggle('is-on', j === k);

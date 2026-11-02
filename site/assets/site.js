@@ -388,8 +388,10 @@
     for (var k = 0; k < kept.length; k++) { if (kept[k] === el) break; if (kept[k].parentElement === p) i++; }
     return Math.min(i, 6);
   }
+  var COUNTS = new Map();
   function show(el) {
     el.classList.add('is-in');
+    Array.prototype.forEach.call(el.querySelectorAll('[data-count]'), function (c) { var f = COUNTS.get(c); if (f) { COUNTS.delete(c); f(); } });
     var p = el.parentElement; if (!p) return;
     p.classList.add('rv-in');
     if (p.classList.contains('timeline')) {
@@ -406,11 +408,12 @@
     if (el.getBoundingClientRect().top < window.innerHeight) { show(el); return; }
     io.observe(el);
   });
-  /* the numbers that count up */
+  /* the numbers that count up: a counter inside a revealed part starts with its reveal; one outside starts when half of
+     it is on screen */
   var lang = document.documentElement.lang === 'fr' ? 'fr-CA' : 'en-CA';
   Array.prototype.forEach.call(document.querySelectorAll('[data-count]'), function (el) {
     if (RM) return;
-    var text = el.textContent, m = text.replace(/[\s\u00a0,]/g, '').match(/^(\d+)(\+?)$/);
+    var text = el.textContent, m = text.replace(/[\s ,]/g, '').match(/^(\d+)(\+?)$/);
     if (!m) return;
     var N = +m[1], suffix = m[2], t0 = 0, done = false;
     function fmt(v) { try { return v.toLocaleString(lang) + suffix; } catch (e) { return v + suffix; } }
@@ -421,6 +424,8 @@
       if (t < 1) window.requestAnimationFrame(tick);
     }
     function start() { if (done) return; done = true; el.textContent = fmt(0); window.requestAnimationFrame(tick); }
+    var host = el.closest('.rv');
+    if (host) { if (host.classList.contains('is-in')) start(); else COUNTS.set(el, start); return; }
     if (el.getBoundingClientRect().top < H && el.getBoundingClientRect().bottom > 0) { start(); return; }
     var co = new IntersectionObserver(function (es) {
       es.forEach(function (x) { if (x.isIntersecting) { start(); co.disconnect(); } });
