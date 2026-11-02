@@ -362,3 +362,64 @@
   dd.addEventListener('focusout', function (e) { if (!dd.contains(e.relatedTarget)) set(false); });
   dd.querySelectorAll('.dd-menu a').forEach(function (a) { a.addEventListener('click', function () { set(false); }); });
 })();
+/* wave274 (02/11/26, Steel: "make our story feel immersive as the user scrolls"): the scroll reveal. Parts of a page below
+   the first screen (cards, tiles, steps, timeline entries, photos) get .rv here and .is-in when they scroll into view, so
+   they settle up by 14px as the visitor reaches them; children of one parent follow each other 60ms apart (--rv-i). Nothing
+   live or functional moves: the hero, the next servings, campaign totals, forms and the footer are skipped, as is anything
+   under data-rv="off". What is already on screen when this runs is shown at once, so a reload mid-page never flashes.
+   Numbers marked data-count count up from 0 over 900ms when they appear. Without JavaScript, or when the visitor prefers
+   reduced motion, everything simply shows: .rv is only ever added here, and the stylesheet keeps .rv visible under
+   prefers-reduced-motion. No inline scripts or styles: the Content-Security-Policy allows neither. */
+(function () {
+  if (!('IntersectionObserver' in window)) return;
+  var RM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var SEL = '.band .split > *, .paths li, .tiles .tile, .pillars li, .focus > div, .ways .way, .steps li, .needs li, .timeline li, .drt li, .gtags .gt, .cards2 .card, .quote, .gallery > *, .posters li, .dgrow li, .faq-list > *';
+  var SKIP = '.hero, [data-upcoming], [data-campaign], [data-dr-gifts], [data-wa-form], .form-card, [data-rv="off"], .foot';
+  var LIVE = '[data-upcoming], [data-campaign], [data-wa-form]';
+  var kept = [], H = window.innerHeight;
+  Array.prototype.forEach.call(document.querySelectorAll(SEL), function (el) {
+    if (el.closest(SKIP)) return;
+    if (el.querySelector(LIVE)) return;
+    kept.push(el);
+  });
+  var seen = [];
+  function index(el) {
+    var p = el.parentElement, i = 0;
+    for (var k = 0; k < kept.length; k++) { if (kept[k] === el) break; if (kept[k].parentElement === p) i++; }
+    return Math.min(i, 6);
+  }
+  function show(el) {
+    el.classList.add('is-in');
+    if (el.parentElement) el.parentElement.classList.add('rv-in');
+  }
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (x) { if (x.isIntersecting) { show(x.target); io.unobserve(x.target); } });
+  }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+  kept.forEach(function (el) {
+    el.style.setProperty('--rv-i', index(el));
+    el.classList.add('rv');
+    if (el.getBoundingClientRect().top < window.innerHeight) { show(el); return; }
+    io.observe(el);
+  });
+  /* the numbers that count up */
+  var lang = document.documentElement.lang === 'fr' ? 'fr-CA' : 'en-CA';
+  Array.prototype.forEach.call(document.querySelectorAll('[data-count]'), function (el) {
+    if (RM) return;
+    var text = el.textContent, m = text.replace(/[\s\u00a0,]/g, '').match(/^(\d+)(\+?)$/);
+    if (!m) return;
+    var N = +m[1], suffix = m[2], t0 = 0, done = false;
+    function fmt(v) { try { return v.toLocaleString(lang) + suffix; } catch (e) { return v + suffix; } }
+    function tick(now) {
+      if (!t0) t0 = now;
+      var t = Math.min(1, (now - t0) / 900), e = 1 - Math.pow(1 - t, 3);
+      el.textContent = t < 1 ? fmt(Math.round(N * e)) : text;
+      if (t < 1) window.requestAnimationFrame(tick);
+    }
+    function start() { if (done) return; done = true; el.textContent = fmt(0); window.requestAnimationFrame(tick); }
+    if (el.getBoundingClientRect().top < H && el.getBoundingClientRect().bottom > 0) { start(); return; }
+    var co = new IntersectionObserver(function (es) {
+      es.forEach(function (x) { if (x.isIntersecting) { start(); co.disconnect(); } });
+    }, { threshold: 0.5 });
+    co.observe(el);
+  });
+})();

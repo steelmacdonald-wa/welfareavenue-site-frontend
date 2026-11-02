@@ -6,7 +6,7 @@
    No inline styles anywhere: the Content-Security-Policy allows none. */
 :root{--green:#103F39;--deep:#133432;--ink:#1F201E;--muted:#585B57;--cream:#FFFAF2;--white:#FFFFFF;
   --grey:#F3F5F4;--mist:#F8F9F8;--sand:#F7EDD6;--gold:#DCA527;--purple:#6F64AB;--line:#D3D9D6;--rule:rgba(16,63,57,.5);
-  --flag:#A8382A;--wrap:1200px;
+  --flag:#A8382A;--wrap:1200px;--ease-out:cubic-bezier(.23,1,.32,1);--ease-in-out:cubic-bezier(.77,0,.175,1);
   --hf:'Barlow Condensed','WA Heading Fallback',sans-serif;--bf:'Space Grotesk','WA Body Fallback',sans-serif}
 /* Fallback faces sized to the brand fonts' widths (measured against Arial, 29/09/26), so text wraps the same while the web
    fonts load and nothing jumps when they arrive: Barlow Condensed is 0.67 of Arial Bold, Space Grotesk 1.10 of Arial. */
@@ -48,8 +48,9 @@ h2+p,h2+.lede,h2+ul,h2+.figs,.over+h2{margin-top:0}
 
 /* Buttons: square, green, with an arrow */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:14px;font-family:var(--hf);font-weight:500;font-size:20px;line-height:1;
-  padding:20px 30px;border:1.5px solid var(--green);background:var(--green);color:var(--white);text-decoration:none;cursor:pointer;border-radius:0;transition:background .15s,color .15s,border-color .15s}
+  padding:20px 30px;border:1.5px solid var(--green);background:var(--green);color:var(--white);text-decoration:none;cursor:pointer;border-radius:0;transition:background .15s,color .15s,border-color .15s,transform .16s var(--ease-out)}
 .btn:hover{background:var(--deep);border-color:var(--deep);text-decoration:none}
+.btn:active,.sq:active{transform:scale(.97)}
 .btn .ar{width:18px;height:14px;flex:none}
 .btn.ghost{background:transparent;color:var(--green)}
 .btn.ghost:hover{background:var(--green);color:var(--white)}
@@ -66,7 +67,7 @@ h2+p,h2+.lede,h2+ul,h2+.figs,.over+h2{margin-top:0}
 .btn.small{font-size:17px;padding:12px 18px;gap:10px;margin:0;color:var(--white)}
 .btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
 @media (max-width:480px){.btn{font-size:19px;padding:18px 24px}}
-.sq{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:var(--green);color:var(--white);flex:none;transition:background .15s}
+.sq{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:var(--green);color:var(--white);flex:none;transition:background .15s,transform .16s var(--ease-out)}
 .sq:hover{background:var(--deep)}
 .sq .ar{width:18px;height:14px}
 .textlink{display:inline-flex;align-items:center;gap:10px;font-size:15px;font-weight:500;text-decoration:none;color:var(--green)}
@@ -701,3 +702,8 @@ dialog.signin::backdrop{background:rgba(16,63,57,.55)}
   .nav .side{gap:14px;margin-left:8px;padding-left:14px}
   .top .donate-m{margin-left:14px;padding:12px 16px;font-size:17px}
 }
+/* wave274 (02/11/26, Steel: "make our story feel immersive as the user scrolls"): the scroll reveal. site.js adds .rv to
+   parts of a page below the first screen and .is-in when they scroll into view; without JavaScript nothing is hidden. */
+.rv{opacity:0;transform:translateY(14px);transition:opacity .6s var(--ease-out),transform .6s var(--ease-out);transition-delay:calc(var(--rv-i,0) * 60ms)}
+.rv.is-in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}}
