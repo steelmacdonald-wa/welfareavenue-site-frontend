@@ -8,7 +8,8 @@ permissions:
   contents: read
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    # Pinned (02/11/26): ubuntu-latest moved to Ubuntu 26.04, which Playwright 1.56 cannot install Chromium on.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
