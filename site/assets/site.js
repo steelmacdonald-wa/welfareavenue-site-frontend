@@ -390,7 +390,12 @@
   }
   function show(el) {
     el.classList.add('is-in');
-    if (el.parentElement) el.parentElement.classList.add('rv-in');
+    var p = el.parentElement; if (!p) return;
+    p.classList.add('rv-in');
+    if (p.classList.contains('timeline')) {
+      var f = (Array.prototype.indexOf.call(p.children, el) + 1) / p.children.length;
+      if (f > (parseFloat(p.style.getPropertyValue('--tl-fill')) || 0)) p.style.setProperty('--tl-fill', String(f));
+    }
   }
   var io = new IntersectionObserver(function (es) {
     es.forEach(function (x) { if (x.isIntersecting) { show(x.target); io.unobserve(x.target); } });

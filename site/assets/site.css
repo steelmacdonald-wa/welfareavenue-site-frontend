@@ -257,9 +257,10 @@ section{position:relative}
 .quote figcaption b{font-weight:700}
 
 /* Timeline */
-.timeline{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule);display:grid;gap:24px}
+.timeline{list-style:none;margin:0;padding:0;position:relative;display:grid;gap:24px}
+.timeline::before,.timeline::after{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--rule)}
 .timeline li{padding-left:26px;position:relative}
-.timeline li::before{content:'';position:absolute;left:-6px;top:9px;width:11px;height:11px;background:var(--gold)}
+.timeline li::before{content:'';position:absolute;left:-6px;top:9px;width:11px;height:11px;background:var(--gold);transition:transform .6s var(--ease-out)}
 .timeline .when{font-family:var(--hf);font-weight:600;color:var(--green);font-size:20px}
 .timeline p{margin:2px 0 0}
 
@@ -720,9 +721,16 @@ dialog.signin::backdrop{background:rgba(16,63,57,.55)}
 .dg-goal .dg-bar{background:none;border:1.5px solid var(--green)}.dg-goal .dg-bar i{background:var(--green);opacity:.18}
 .dg-n{font-size:15px;color:var(--muted);margin-top:4px}
 .dgrow li.rv:not(.is-in) .dg-bar i{transform:scaleX(0)}
-@supports (animation-timeline: view()){
-  .dgrow .dg-bar i{animation:dg-fill linear both;animation-timeline:view();animation-range:entry 20% entry 90%}
-  @keyframes dg-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-  .dgrow li.rv:not(.is-in) .dg-bar i{transform:none}
+@media (prefers-reduced-motion:reduce){.dgrow .dg-bar i{transform:none}}
+/* wave274: the About page's "Since 2020" rail fills in gold as the reader reaches each entry (site.js sets --tl-fill), each
+   entry's gold square settling in with its reveal; and on the volunteer page
+   the three "How to join" steps follow each other 120ms apart, a gold line drawing across them on a computer. */
+.timeline::after{width:3px;left:-1px;background:var(--gold);transform-origin:top;transform:scaleY(var(--tl-fill,0));transition:transform .6s var(--ease-out)}
+.timeline li.rv:not(.is-in)::before{transform:scale(.6)}
+@media (prefers-reduced-motion:reduce){.timeline li::before{transform:none}}
+.steps li.rv{transition-delay:calc(var(--rv-i,0) * 120ms)}
+@media (min-width:860px){
+  .steps{position:relative}
+  .steps::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--gold);transform-origin:left;transform:scaleX(0);transition:transform 1.2s var(--ease-out)}
+  .steps.rv-in::before{transform:none}
 }
-@media (prefers-reduced-motion:reduce){.dgrow .dg-bar i{animation:none;transform:none}}
