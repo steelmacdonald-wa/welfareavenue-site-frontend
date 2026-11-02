@@ -707,3 +707,22 @@ dialog.signin::backdrop{background:rgba(16,63,57,.55)}
 .rv{opacity:0;transform:translateY(14px);transition:opacity .6s var(--ease-out),transform .6s var(--ease-out);transition-delay:calc(var(--rv-i,0) * 60ms)}
 .rv.is-in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}}
+/* wave274: the gift basket drive on the home page (after the three ways in), and the growth bars it shares with the drive
+   page: 2024, 2025 and this year's goal, the bars 25, 50 and 100% wide; only the gold fill inside (i) moves, by scaleX. */
+.drive-band .pic img{aspect-ratio:3/4}
+.drive-band .fine .textlink{font-size:15px}
+.dgrow{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:12px;max-width:34em}
+.dgrow li{display:grid;grid-template-columns:3.2em 1fr;column-gap:14px;align-items:center}
+.dg-y{font-family:var(--hf);font-weight:600;font-size:20px;line-height:1;color:var(--green);grid-row:1 / span 2}
+.dg-bar{display:block;height:14px;background:rgba(16,63,57,.1);overflow:hidden}
+.dg-bar i{display:block;height:100%;background:var(--gold);transform-origin:left;transform:scaleX(1);transition:transform .9s var(--ease-out)}
+.dg-25 .dg-bar{width:25%}.dg-50 .dg-bar{width:50%}.dg-100 .dg-bar{width:100%}
+.dg-goal .dg-bar{background:none;border:1.5px solid var(--green)}.dg-goal .dg-bar i{background:var(--green);opacity:.18}
+.dg-n{font-size:15px;color:var(--muted);margin-top:4px}
+.dgrow li.rv:not(.is-in) .dg-bar i{transform:scaleX(0)}
+@supports (animation-timeline: view()){
+  .dgrow .dg-bar i{animation:dg-fill linear both;animation-timeline:view();animation-range:entry 20% entry 90%}
+  @keyframes dg-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .dgrow li.rv:not(.is-in) .dg-bar i{transform:none}
+}
+@media (prefers-reduced-motion:reduce){.dgrow .dg-bar i{animation:none;transform:none}}
