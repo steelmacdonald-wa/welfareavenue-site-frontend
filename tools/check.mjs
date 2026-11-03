@@ -57,7 +57,7 @@ const resolves = p => {
 
 // ---- pages
 // Google Search Console verification files (google<hex>.html) are one-line tokens, not pages: they must stay in place and are not checked.
-const pages = all.filter(f => f.endsWith('.html') && !/^google[0-9a-f]+.html$/.test(f));
+const pages = all.filter(f => f.endsWith('.html') && !/^google[0-9a-f]+\.html$/.test(f));
 const alt = {};   // page -> {en, fr}
 const canonOf = {};
 const TYPOS = ['Sing Up', 'Sing In', 'ressources', 'generosuty', 'Cordinator', ' teem ', 'La Fontaine Parc'];
