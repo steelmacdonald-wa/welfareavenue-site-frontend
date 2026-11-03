@@ -13,7 +13,7 @@ import { startServer } from './serve.mjs';
 const site = process.argv[2] || 'site';
 const PORT = 8123, BASE = `http://localhost:${PORT}`;
 const walk = (d, out = []) => { for (const n of readdirSync(d)) { const p = join(d, n); statSync(p).isDirectory() ? walk(p, out) : out.push(p); } return out; };
-const pages = walk(site).map(p => relative(site, p).split('\\').join('/')).filter(p => p.endsWith('.html') && p !== '404.html')
+const pages = walk(site).map(p => relative(site, p).split('\\').join('/')).filter(p => p.endsWith('.html') && p !== '404.html' && !/^google[0-9a-f]+\.html$/.test(p))
   .map(p => '/' + p.replace(/index\.html$/, '')).sort()
   .filter(p => !process.env.CHECK_PAGES || process.env.CHECK_PAGES.split(',').includes(p));   // e.g. CHECK_PAGES=/,/fr/
 const WIDTHS = [[1280, 900], [390, 844]];
