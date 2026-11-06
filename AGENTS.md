@@ -52,7 +52,7 @@ The Hub (hub.welfareavenue.com) is Welfare Avenue's internal system. Parts of th
 - **Donations:** links with `data-wa-donate` (with `data-wa-amount` and `data-wa-campaign`) open the Hub's donation pop-up, loaded from `https://hub.welfareavenue.com/give/embed.js`.
 - **Accounts:** `assets/signin.js`, `assets/account.js`, the `/account/` and `/fr/compte/` pages and the header links marked `data-acct-link` (Google sign-in or an emailed code).
 - **Live details:** the next servings (`data-upcoming`, `data-next` and the `upcoming-seed` block), team photos and campaign totals are read from the Hub's public data. The `data-supa` and `data-key` values on `<body>` are a public key meant to be in the page: leave them.
-- **Toronto's volunteer forms** are embedded from Keela (`form-can.keela.co`).
+- **Toronto's volunteer forms** are Hub forms too (`toronto-volunteer`, `toronto-student` and their French twins), opened in pop-ups on the Toronto pages.
 
 **Never rename, remove or translate an `id`, a `data-` attribute or its value.** Scripts, other pages, emails and `_redirects` rely on them: renaming `id="apply"`, for example, breaks every Sign up link.
 
