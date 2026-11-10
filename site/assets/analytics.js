@@ -54,7 +54,7 @@
       var href = el.getAttribute('href') || '';
       if (el.hasAttribute('data-wa-donate') || /hub\.welfareavenue\.com\/give/.test(href)) {
         var amt = Number(el.getAttribute('data-wa-amount')) || undefined;
-        ev('donate_click', { campaign: el.getAttribute('data-wa-campaign') || 'general', value: amt, currency: amt ? 'CAD' : undefined, link_text: label(el) });
+        ev('donate_click', { donate_campaign: el.getAttribute('data-wa-campaign') || 'general', value: amt, currency: amt ? 'CAD' : undefined, link_text: label(el) });
         return;
       }
       if (inForm) return;
@@ -62,9 +62,9 @@
         ev('signup_open', { form: formName(el), link_text: label(el) });
         return;
       }
-      if (el.hasAttribute('hreflang')) { ev('language_switch', { to: el.getAttribute('hreflang') }); return; }
-      if (/^mailto:/.test(href)) { ev('contact_click', { method: 'email' }); return; }
-      if (/^(tel|sms):/.test(href)) { ev('contact_click', { method: href.split(':')[0] }); return; }
+      if (el.hasAttribute('hreflang')) { ev('language_switch', { language: el.getAttribute('hreflang') }); return; }
+      if (/^mailto:/.test(href)) { ev('contact_click', { contact_method: 'email' }); return; }
+      if (/^(tel|sms):/.test(href)) { ev('contact_click', { contact_method: href.split(':')[0] }); return; }
       if (el.classList.contains('btn') || el.tagName === 'BUTTON') {
         ev('button_click', { link_text: label(el), link_url: href || undefined });
       }
