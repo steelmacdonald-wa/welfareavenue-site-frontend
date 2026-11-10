@@ -134,13 +134,17 @@
       Array.prototype.forEach.call(bs, function (b) { if (b.checked) c++; });
       Array.prototype.forEach.call(bs, function (b) { if (!b.checked) b.disabled = n > 0 && c >= n; });
     }
+    /* wave285 (Toronto forms): the second consent box, text messages, shown when the form's consent.sms.ask is true. Never required. */
+    function smsBox(sms, keep) {
+      return sms ? '<label class="choice"><input type="checkbox" id="' + pfx + '_consent_sms" name="_consent_sms"' + (keep && keep._consent_sms ? ' checked' : '') + '><span>' + E(sms.label) + '</span></label>' : '';
+    }
     function render(keep) {
-      var f = S.form, c = f.consent || {}, cerr = S.errors._consent, heading = box.getAttribute('data-heading');
+      var f = S.form, c = f.consent || {}, sms = c.sms && c.sms.ask ? c.sms : null, cerr = S.errors._consent, heading = box.getAttribute('data-heading');
       box.innerHTML = '<form novalidate lang="' + S.lang + '">' + (heading !== 'none' ? '<h3>' + E(f.title) + '</h3>' + (f.intro ? '<p class="waf-intro">' + E(f.intro) + '</p>' : '') : '') + acctLine() +
         (S.banner ? '<div class="waf-banner ' + (Object.keys(S.errors).length ? 'warn' : 'info') + '" role="alert">' + E(S.banner) + '</div>' : '') +
         f.questions.map(function (q) { return field(q, keep); }).join('') +
         (c.ask ? '<div class="q consent' + (cerr ? ' bad' : '') + '" data-q="_consent"><label class="choice"><input type="checkbox" id="' + pfx + '_consent" name="_consent"' + (keep && keep._consent ? ' checked' : '') + (cerr ? ' aria-invalid="true" aria-describedby="' + pfx + '_consent_e"' : '') + '><span>' + E(c.label) + (c.required ? '<span class="req" aria-hidden="true">*</span>' : '') + '</span></label>' +
-          (cerr ? '<p class="err" id="' + pfx + '_consent_e">' + E(cerr) + '</p>' : '') + '<p class="small">' + E((S.org && S.org.address) || 'Welfare Avenue') + ' · ' + E((S.org && S.org.email) || '') + '</p></div>' : '') +
+          (cerr ? '<p class="err" id="' + pfx + '_consent_e">' + E(cerr) + '</p>' : '') + smsBox(sms, keep) + '<p class="small">' + E((S.org && S.org.address) || 'Welfare Avenue') + ' · ' + E((S.org && S.org.email) || '') + '</p></div>' : (sms ? '<div class="q consent" data-q="_consent_sms">' + smsBox(sms, keep) + '</div>' : '')) +
         '<div class="hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>' +
         '<button type="submit" class="btn waf-send"' + (S.sending ? ' disabled' : '') + '>' + E(S.sending ? t('sending') : t('send')) + '</button>' +
         '<p class="waf-privacy">' + E(t('privacy')) + ' <a href="' + PRIV_URL + '">' + E(t('privacyLink')) + '</a></p></form>';
@@ -174,6 +178,7 @@
         else { var el = form.querySelector('[name="' + q.id + '"]'); out[q.id] = el ? el.value : ''; }
       });
       var cb = form.querySelector('input[name="_consent"]'); out._consent = !!(cb && cb.checked);
+      var cs = form.querySelector('input[name="_consent_sms"]'); if (cs) out._consent_sms = !!cs.checked;
       out._hp = (form.querySelector('input[name="website"]') || {}).value || '';
       return out;
     }
@@ -234,7 +239,9 @@
       // wave194: a signed-in account sends its own sign-in, so form-submit saves the answers to that person's record
       return (ACCT && window.WA ? window.WA.session() : Promise.resolve(null)).then(function (s) {
         var tok = s && window.WA.isAccount(s) ? s.access_token : null;
-        return call('POST', S.form.slug, { slug: S.form.slug, token: S.token, answers: answers, consent: a._consent, hp: a._hp, lang: S.lang }, tok);
+        var body = { slug: S.form.slug, token: S.token, answers: answers, consent: a._consent, hp: a._hp, lang: S.lang };
+        if (typeof a._consent_sms === 'boolean') body.consent_sms = a._consent_sms;
+        return call('POST', S.form.slug, body, tok);
       }).then(function (r) {
         S.sending = false;
         if (r.status === 200 && r.body.ok) { thanks(r.body.thank_you || S.form.thank_you, r.body.saved === true); return; }
