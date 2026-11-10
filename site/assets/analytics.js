@@ -62,7 +62,7 @@
         ev('signup_open', { form: formName(el), link_text: label(el) });
         return;
       }
-      if (el.hasAttribute('hreflang')) { ev('language_switch', { language: el.getAttribute('hreflang') }); return; }
+      if (el.hasAttribute('hreflang')) { ev('language_switch', { switch_to: el.getAttribute('hreflang') }); return; }
       if (/^mailto:/.test(href)) { ev('contact_click', { contact_method: 'email' }); return; }
       if (/^(tel|sms):/.test(href)) { ev('contact_click', { contact_method: href.split(':')[0] }); return; }
       if (el.classList.contains('btn') || el.tagName === 'BUTTON') {
