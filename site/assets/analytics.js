@@ -6,16 +6,16 @@
   'use strict';
   var ID = 'G-J4RXM9WJSW';
   /* Microsoft Clarity (heat maps and visit recordings, Steel 10/11/26): its project id, empty until the project exists. */
-  var CLARITY = '';
+  var CLARITY = 'zbcoohovt6';
   var KEY = 'wa_consent';
   var FR = (document.documentElement.lang || '').toLowerCase().indexOf('fr') === 0;
   var T = FR ? {
     label: 'Témoins',
-    text: 'Nous aimerions utiliser les témoins de Google Analytics pour compter les visites et savoir quelles pages vous sont utiles. Aucune publicité, et nous ne vendons jamais vos données.',
+    text: 'Nous aimerions utiliser les témoins de Google Analytics et de Microsoft Clarity pour compter les visites et voir comment nos pages sont utilisées (clics et défilement). Aucune publicité, et nous ne vendons jamais vos données.',
     more: 'Confidentialité', href: '/fr/confidentialite/', yes: 'Accepter', no: 'Refuser'
   } : {
     label: 'Cookies',
-    text: 'We would like to use Google Analytics cookies to count visits and see which pages help people most. No ads, and we never sell your data.',
+    text: 'We would like to use cookies from Google Analytics and Microsoft Clarity to count visits and see how people use our pages (clicks and scrolling). No ads, and we never sell your data.',
     more: 'Privacy', href: '/privacy/', yes: 'Accept', no: 'Decline'
   };
 
