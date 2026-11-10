@@ -182,6 +182,17 @@ section{position:relative}
 .fig b{display:block;font-family:var(--hf);font-weight:500;font-size:clamp(38px,3.8vw,50px);line-height:1;color:var(--green)}
 .fig span{display:block;margin-top:14px;font-family:var(--hf);font-weight:600;font-size:18px;line-height:1.25;color:var(--green)}
 .on-dark .fig b,.on-dark .fig span{color:var(--white)}
+/* The eight charitable activities (About, #activities, Steel 10/11/26): numbered stops along a gold line, like the long E.
+   site.js reveals each stop 60ms after the last and adds .rv-in to the list, which draws the line across. */
+.acts{list-style:none;margin:40px 0 0;padding:0;display:grid;gap:28px 24px;grid-template-columns:1fr;position:relative}
+@media (min-width:640px){.acts{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:1000px){.acts{grid-template-columns:repeat(4,1fr);row-gap:40px}}
+.acts li{border-top:3px solid rgba(255,255,255,.18);padding-top:16px}
+.acts .act-n{display:block;font-family:var(--hf);font-weight:600;font-size:40px;line-height:1;color:var(--gold)}
+.acts p{margin:10px 0 0;font-size:16.5px;line-height:1.45;color:var(--white)}
+.acts li::before{content:"";display:block;height:3px;margin-top:-19px;margin-bottom:16px;background:var(--gold);transform-origin:left;transform:scaleX(1);transition:transform .9s var(--ease-out);transition-delay:calc(var(--rv-i,0) * 60ms + 120ms)}
+.acts li.rv:not(.is-in)::before{transform:scaleX(0)}
+@media (prefers-reduced-motion:reduce){.acts li::before{transform:none}}
 
 /* Numbered steps and the team at each serving */
 .steps,.needs{display:grid;gap:36px 30px;list-style:none;margin:0;padding:0}

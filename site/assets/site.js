@@ -373,7 +373,7 @@
 (function () {
   if (!('IntersectionObserver' in window)) return;
   var RM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var SEL = '.band .split > *, .paths li, .tiles .tile, .pillars li, .focus > div, .ways .way, .steps li, .needs li, .timeline li, .drt li, .gtags .gt, .cards2 .card, .quote, .gallery > *, .posters li, .dgrow li, .faq-list > *';
+  var SEL = '.band .split > *, .paths li, .tiles .tile, .pillars li, .focus > div, .ways .way, .steps li, .needs li, .timeline li, .drt li, .gtags .gt, .cards2 .card, .quote, .gallery > *, .posters li, .dgrow li, .acts li, .faq-list > *';
   var SKIP = '.hero, [data-upcoming], [data-campaign], [data-dr-gifts], [data-wa-form], .form-card, [data-rv="off"], .foot';
   var LIVE = '[data-upcoming], [data-campaign], [data-wa-form]';
   var kept = [], H = window.innerHeight;
