@@ -1,19 +1,21 @@
-/* Welfare Avenue website: Google Analytics, only with the visitor's permission (Quebec Law 25).
+/* Welfare Avenue website: Google Analytics and Microsoft Clarity, only with the visitor's permission (Quebec Law 25).
    Nothing is sent to Google and no analytics cookie is set until the visitor presses Accept.
    The choice is kept in this browser (wa_consent = yes or no). Any element with data-wa-consent-open
    (the privacy pages have one) shows the banner again so people can change their mind. */
 (function () {
   'use strict';
   var ID = 'G-J4RXM9WJSW';
+  /* Microsoft Clarity (heat maps and visit recordings, Steel 10/11/26): its project id, empty until the project exists. */
+  var CLARITY = 'zbcoohovt6';
   var KEY = 'wa_consent';
   var FR = (document.documentElement.lang || '').toLowerCase().indexOf('fr') === 0;
   var T = FR ? {
     label: 'Témoins',
-    text: 'Nous aimerions utiliser les témoins de Google Analytics pour compter les visites et savoir quelles pages vous sont utiles. Aucune publicité, et nous ne vendons jamais vos données.',
+    text: 'Nous aimerions utiliser les témoins de Google Analytics et de Microsoft Clarity pour compter les visites et voir comment nos pages sont utilisées (clics et défilement). Aucune publicité, et nous ne vendons jamais vos données.',
     more: 'Confidentialité', href: '/fr/confidentialite/', yes: 'Accepter', no: 'Refuser'
   } : {
     label: 'Cookies',
-    text: 'We would like to use Google Analytics cookies to count visits and see which pages help people most. No ads, and we never sell your data.',
+    text: 'We would like to use cookies from Google Analytics and Microsoft Clarity to count visits and see how people use our pages (clicks and scrolling). No ads, and we never sell your data.',
     more: 'Privacy', href: '/privacy/', yes: 'Accept', no: 'Decline'
   };
 
@@ -34,6 +36,16 @@
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + ID;
     document.head.appendChild(s);
     track();
+    clarity();
+  }
+  function clarity() {
+    if (!CLARITY || window.clarity) return;
+    window.clarity = function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
+    var c = document.createElement('script');
+    c.async = true;
+    c.src = 'https://www.clarity.ms/tag/' + CLARITY;
+    document.head.appendChild(c);
+    window.clarity('consent');
   }
 
   /* Welfare Avenue's own events, on top of what Google measures by itself (page views, time on the site,
@@ -46,28 +58,43 @@
     var d = el.closest('dialog');
     return d && d.id ? d.id : location.pathname;
   }
+  /* Where on the page a click happened: the menu, the footer, a pop-up form, or the page section (its id, else its heading). */
+  function areaOf(el) {
+    if (el.closest('header, .top, nav')) return 'menu';
+    if (el.closest('footer, .foot')) return 'footer';
+    if (el.closest('dialog')) return 'popup';
+    var sec = el.closest('section, [id]');
+    while (sec && !(sec.id || sec.querySelector('h1,h2'))) sec = sec.parentElement ? sec.parentElement.closest('section, [id]') : null;
+    if (!sec) return 'page';
+    if (sec.id) return sec.id.slice(0, 40);
+    var h = sec.querySelector('h1,h2'); return h ? label(h).toLowerCase().slice(0, 40) : 'page';
+  }
   function track() {
     document.addEventListener('click', function (e) {
-      var el = e.target && e.target.closest ? e.target.closest('a, button') : null;
+      var el = e.target && e.target.closest ? e.target.closest('a, button, summary, [role="button"]') : null;
       if (!el || el.closest('.consent')) return;
       var inForm = !!el.closest('dialog, form, .waf');
       var href = el.getAttribute('href') || '';
+      var base = { click_text: label(el), click_area: areaOf(el) };
       if (el.hasAttribute('data-wa-donate') || /hub\.welfareavenue\.com\/give/.test(href)) {
         var amt = Number(el.getAttribute('data-wa-amount')) || undefined;
-        ev('donate_click', { donate_campaign: el.getAttribute('data-wa-campaign') || 'general', value: amt, currency: amt ? 'CAD' : undefined, link_text: label(el) });
+        ev('donate_click', Object.assign({ donate_campaign: el.getAttribute('data-wa-campaign') || 'general', value: amt, currency: amt ? 'CAD' : undefined }, base));
         return;
       }
       if (inForm) return;
       if (el.closest('[data-wa-popup]') || /#(apply|groups)(-form)?$/.test(href)) {
-        ev('signup_open', { form: formName(el), link_text: label(el) });
+        ev('signup_open', Object.assign({ form: formName(el) }, base));
         return;
       }
-      if (el.hasAttribute('hreflang')) { ev('language_switch', { switch_to: el.getAttribute('hreflang') }); return; }
-      if (/^mailto:/.test(href)) { ev('contact_click', { contact_method: 'email' }); return; }
-      if (/^(tel|sms):/.test(href)) { ev('contact_click', { contact_method: href.split(':')[0] }); return; }
-      if (el.classList.contains('btn') || el.tagName === 'BUTTON') {
-        ev('button_click', { link_text: label(el), link_url: href || undefined });
+      if (el.hasAttribute('hreflang')) { ev('language_switch', Object.assign({ switch_to: el.getAttribute('hreflang') }, base)); return; }
+      if (/^mailto:/.test(href)) { ev('contact_click', Object.assign({ contact_method: 'email' }, base)); return; }
+      if (/^(tel|sms):/.test(href)) { ev('contact_click', Object.assign({ contact_method: href.split(':')[0] }, base)); return; }
+      if (el.tagName === 'A' && href && !el.classList.contains('btn')) {
+        /* every other link: the menu, the footer, text links, cards (outbound ones too; GA also counts those as click) */
+        ev('link_click', Object.assign({ click_url: href.slice(0, 120) }, base));
+        return;
       }
+      ev('button_click', Object.assign({ click_url: href ? href.slice(0, 120) : undefined }, base));
     }, true);
     document.addEventListener('submit', function (e) {
       var f = e.target;
@@ -87,6 +114,31 @@
         });
       }).observe(document.body, { childList: true, subtree: true });
     }
+    /* How far down people read: once per page at 25, 50, 75 and 100 percent. */
+    var marks = [25, 50, 75, 100], hit = {};
+    function depth() {
+      var d = document.documentElement, max = Math.max(1, d.scrollHeight - window.innerHeight);
+      var p = max <= 1 ? 100 : Math.round(window.scrollY / max * 100);
+      marks.forEach(function (m) { if (p >= m && !hit[m]) { hit[m] = 1; ev('scroll_depth', { scroll_pct: m }); } });
+    }
+    var tick = null;
+    window.addEventListener('scroll', function () { if (tick) return; tick = setTimeout(function () { tick = null; depth(); }, 250); }, { passive: true });
+    setTimeout(depth, 1500);
+    /* Which parts of a page people actually see: each section once, when half of it (or half the screen) is in view. */
+    if (window.IntersectionObserver) {
+      var seen = {};
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          var r = en.intersectionRatio, big = en.boundingClientRect.height > window.innerHeight;
+          if (r < 0.5 && !(big && en.intersectionRect.height >= window.innerHeight * 0.5)) return;
+          var name = areaOf(en.target.querySelector('h1,h2,h3') || en.target);
+          if (seen[name]) return; seen[name] = 1; io.unobserve(en.target);
+          ev('section_view', { section: name });
+        });
+      }, { threshold: [0, 0.25, 0.5, 0.75] });
+      document.querySelectorAll('main section, main > [id], section[id]').forEach(function (s) { io.observe(s); });
+    }
   }
 
   /* Remove Google Analytics cookies when someone withdraws their permission. */
@@ -94,7 +146,7 @@
     var host = location.hostname.replace(/^www\./, '');
     document.cookie.split(';').forEach(function (c) {
       var name = c.split('=')[0].trim();
-      if (!/^_ga/.test(name)) return;
+      if (!/^(_ga|_clck|_clsk|CLID|ANONCHK|MR|MUID|SM)$|^_ga/.test(name)) return;
       ['', '; domain=' + host, '; domain=.' + host].forEach(function (d) {
         document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/' + d;
       });
@@ -108,7 +160,7 @@
     set(v);
     hide();
     if (v === 'yes') { load(); return; }
-    if (was === 'yes' || loaded) { clearCookies(); location.reload(); }
+    if (was === 'yes' || loaded) { try { if (window.clarity) window.clarity('consent', false); } catch (e) { /* fine */ } clearCookies(); location.reload(); }
   }
   function show() {
     if (!bar) {
