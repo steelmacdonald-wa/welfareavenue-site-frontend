@@ -20,9 +20,21 @@
   var URL_FN = SUPA + '/functions/v1/form-submit';
   var PAGE_LANG = B.getAttribute('data-lang') === 'fr' ? 'fr' : 'en';
   var ACCT_URL = PAGE_LANG === 'fr' ? '/fr/compte/' : '/account/', PRIV_URL = PAGE_LANG === 'fr' ? '/fr/confidentialite/' : '/privacy/';
+  var TS_P = null;
+  function loadTs() {
+    if (window.turnstile) return Promise.resolve(window.turnstile);
+    if (TS_P) return TS_P;
+    TS_P = new Promise(function (ok, no) {
+      var sc = document.createElement('script');
+      sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      sc.async = true; sc.onload = function () { ok(window.turnstile); }; sc.onerror = function () { TS_P = null; no(); };
+      document.head.appendChild(sc);
+    });
+    return TS_P;
+  }
   var TX = {
     en: { maxN: 'Please pick at most {n}.', optional: '(optional)', send: 'Send', sending: 'Sending…', fix: 'Please check the answers marked below.', required: 'Please answer this question.', email: 'Please enter a valid email address.',
-      phone: 'Please enter a phone number we can reach.', consent: 'Please tick the box to sign up.', rate: 'Too many tries from here. Please wait a few minutes and send again.',
+      phone: 'Please enter a phone number we can reach.', consent: 'Please tick the box to sign up.', botcheck: 'We could not confirm you are a person. Please tick the check above the Send button and send again.', rate: 'Too many tries from here. Please wait a few minutes and send again.',
       expired: 'This page was open a long time, so we refreshed the form. Please check your answers and send again.', server: 'Something went wrong on our side. Please try again in a minute.',
       offline: 'We could not reach Welfare Avenue. Check your connection and try again.', nodates: 'No dates are open right now. Send the form and we will reach out when new ones are set.',
       yes: 'Yes', no: 'No', thanks: 'Thank you!', closed: 'This form is closed for now. You can reach us at ', select: 'Choose…',
@@ -31,7 +43,7 @@
       acctOffer: 'Have an account? {a} and this form fills in for you.', acctSignIn: 'Sign in', saved: 'Your profile is updated too.',
       fileType: 'Please attach a PDF, Word document or photo.', fileBig: 'That file is over {n} MB. Please attach a smaller one.', attached: 'Attached: ', uploading: 'Uploading your file…', fileFail: 'Your file could not be uploaded. Please try again.', jd: 'Job description' },
     fr: { maxN: 'Veuillez en choisir {n} au plus.', optional: '(facultatif)', send: 'Envoyer', sending: 'Envoi…', fix: 'Veuillez vérifier les réponses indiquées ci-dessous.', required: 'Veuillez répondre à cette question.', email: 'Veuillez entrer une adresse courriel valide.',
-      phone: 'Veuillez entrer un numéro où vous joindre.', consent: 'Veuillez cocher la case pour vous inscrire.', rate: 'Trop d’essais depuis cet appareil. Veuillez patienter quelques minutes.',
+      phone: 'Veuillez entrer un numéro où vous joindre.', consent: 'Veuillez cocher la case pour vous inscrire.', botcheck: 'Nous n’avons pas pu confirmer que vous êtes une personne. Cochez la vérification au-dessus du bouton Envoyer et envoyez de nouveau.', rate: 'Trop d’essais depuis cet appareil. Veuillez patienter quelques minutes.',
       expired: 'Cette page était ouverte depuis longtemps; nous avons actualisé le formulaire. Vérifiez vos réponses et envoyez de nouveau.', server: 'Un problème est survenu de notre côté. Veuillez réessayer dans une minute.',
       offline: 'Impossible de joindre Welfare Avenue. Vérifiez votre connexion et réessayez.', nodates: 'Aucune date n’est ouverte pour le moment. Envoyez le formulaire et nous vous écrirons dès que de nouvelles dates seront fixées.',
       yes: 'Oui', no: 'Non', thanks: 'Merci!', closed: 'Ce formulaire est fermé pour le moment. Vous pouvez nous écrire à ', select: 'Choisir…',
@@ -68,7 +80,7 @@
     return Promise.race([look, new Promise(function (res) { setTimeout(res, 2500); })]);
   })();
   function Form(box, n) {
-    var S = { form: null, org: null, token: '', lang: 'en', errors: {}, sending: false, banner: '', files: {}, uploaded: {} };
+    var S = { form: null, org: null, token: '', ts: null, tsId: null, lang: 'en', errors: {}, sending: false, banner: '', files: {}, uploaded: {} };
     var slugs = (box.getAttribute('data-wa-form') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
     var fallback = box.innerHTML, pfx = 'w' + n + '_';
     function t(k) { return (TX[S.lang] || TX.en)[k] || TX.en[k] || k; }
@@ -78,7 +90,7 @@
         if (r.status === 404) return load(i + 1, keep);
         if (r.body && r.body.closed) { S.lang = r.body.lang || S.lang; var mail = (r.body.org && r.body.org.email) || 'info@welfareavenue.com'; box.innerHTML = '<p class="waf-note">' + E(t('closed')) + '<a href="mailto:' + E(mail) + '">' + E(mail) + '</a>.</p>'; return; }
         if (r.status !== 200 || !r.body.form) return;
-        S.form = r.body.form; S.org = r.body.org; S.token = r.body.token; S.lang = S.form.lang === 'fr' ? 'fr' : 'en';
+        S.form = r.body.form; S.org = r.body.org; S.token = r.body.token; S.ts = r.body.turnstile || null;   /* wave308: the bot check, only while the Hub has it on */ S.lang = S.form.lang === 'fr' ? 'fr' : 'en';
         if (keep) S.banner = t('expired');
         return acctReady.then(function () { render(keep); });
       }).catch(function () { /* offline: keep the page's message */ });
@@ -142,9 +154,11 @@
         (c.ask ? '<div class="q consent' + (cerr ? ' bad' : '') + '" data-q="_consent"><label class="choice"><input type="checkbox" id="' + pfx + '_consent" name="_consent"' + (keep && keep._consent ? ' checked' : '') + (cerr ? ' aria-invalid="true" aria-describedby="' + pfx + '_consent_e"' : '') + '><span>' + E(c.label) + (c.required ? '<span class="req" aria-hidden="true">*</span>' : '') + '</span></label>' +
           (cerr ? '<p class="err" id="' + pfx + '_consent_e">' + E(cerr) + '</p>' : '') + '<p class="small">' + E((S.org && S.org.address) || 'Welfare Avenue') + ' · ' + E((S.org && S.org.email) || '') + '</p></div>' : '') +
         '<div class="hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>' +
+        (S.ts ? '<div class="waf-ts" data-waf-ts></div>' : '') +
         '<button type="submit" class="btn waf-send"' + (S.sending ? ' disabled' : '') + '>' + E(S.sending ? t('sending') : t('send')) + '</button>' +
         '<p class="waf-privacy">' + E(t('privacy')) + ' <a href="' + PRIV_URL + '">' + E(t('privacyLink')) + '</a></p></form>';
       box.querySelector('form').addEventListener('submit', submit);
+      if (S.ts) mountTs();
       /* wave216d: the leadership note shows only while a leadership role is picked */
       Array.prototype.forEach.call(box.querySelectorAll('[data-waf-lead]'), function (note) {
         var name = note.getAttribute('data-waf-lead');
@@ -194,6 +208,16 @@
       if (S.form.consent && S.form.consent.ask && S.form.consent.required && !a._consent) errs._consent = t('consent');
       return errs;
     }
+    /* wave308: Cloudflare Turnstile, shown only while the Hub has the bot check on (a wave of automated sign-ups) */
+    function mountTs() {
+      var el = box.querySelector('[data-waf-ts]'); if (!el) return;
+      loadTs().then(function (ts) {
+        if (!ts || !el.isConnected) return;
+        try { if (S.tsId != null) ts.remove(S.tsId); } catch (e) { /* gone with the old form */ }
+        S.tsId = ts.render(el, { sitekey: S.ts, language: S.lang, appearance: 'interaction-only', theme: 'light' });
+      }, function () { /* Cloudflare unreachable: the form still sends, the Hub decides */ });
+    }
+    function tsToken() { try { return S.tsId != null && window.turnstile ? (window.turnstile.getResponse(S.tsId) || '') : ''; } catch (e) { return ''; } }
     function focusFirst() {
       var k = Object.keys(S.errors)[0]; if (!k) return;
       var el = document.getElementById(pfx + k) || box.querySelector('[data-q="' + k + '"] input, [data-q="' + k + '"] textarea, [data-q="' + k + '"] select');
@@ -206,6 +230,7 @@
       if (Object.keys(S.errors).length) { S.banner = t('fix'); render(a); focusFirst(); return; }
       var answers = {}; S.form.questions.forEach(function (q) { answers[q.id] = a[q.id]; });
       var fileQs = S.form.questions.filter(function (q) { return q.type === 'file' && S.files[q.id]; });
+      var tsTok = tsToken();   /* wave308: read before the form is drawn again (that resets the check) */
       S.sending = true; S.banner = fileQs.length ? t('uploading') : ''; render(a);
       var failed = null;
       var up = fileQs.reduce(function (p, q) {
@@ -234,12 +259,13 @@
       // wave194: a signed-in account sends its own sign-in, so form-submit saves the answers to that person's record
       return (ACCT && window.WA ? window.WA.session() : Promise.resolve(null)).then(function (s) {
         var tok = s && window.WA.isAccount(s) ? s.access_token : null;
-        return call('POST', S.form.slug, { slug: S.form.slug, token: S.token, answers: answers, consent: a._consent, hp: a._hp, lang: S.lang }, tok);
+        return call('POST', S.form.slug, { slug: S.form.slug, token: S.token, answers: answers, consent: a._consent, hp: a._hp, lang: S.lang, ts: tsTok }, tok);
       }).then(function (r) {
         S.sending = false;
         if (r.status === 200 && r.body.ok) { thanks(r.body.thank_you || S.form.thank_you, r.body.saved === true); return; }
         if (r.status === 400 && r.body.error === 'invalid') { S.errors = r.body.fields || {}; S.banner = t('fix'); render(a); focusFirst(); return; }
         if (r.status === 400 && r.body.error === 'expired') { S.errors = {}; load(slugs.indexOf(S.form.slug), a); return; }
+        if (r.status === 400 && r.body.error === 'bot_check') { S.errors = {}; S.banner = t('botcheck'); render(a); return; }
         if (r.status === 404 || r.status === 410) { box.innerHTML = fallback; return; }
         S.banner = r.status === 429 ? t('rate') : t('server'); S.errors = {}; render(a);
       }).catch(function () { S.sending = false; S.banner = t('offline'); render(a); });
