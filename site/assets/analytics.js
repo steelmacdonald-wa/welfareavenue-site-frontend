@@ -11,7 +11,7 @@
   var CLARITY = 'zbcoohovt6';
   /* Meta pixel (Steel 11/11/26, for the gift drive and One Bag Challenge ads): its id from Meta Events Manager.
      Empty means the pixel stays off. It loads only for visitors who press Accept all, and never receives names, emails or phone numbers. */
-  var PIXEL = '';
+  var PIXEL = '1871923090651607';
   var KEY = 'wa_consent';
   var FR = (document.documentElement.lang || '').toLowerCase().indexOf('fr') === 0;
   var T = FR ? {
