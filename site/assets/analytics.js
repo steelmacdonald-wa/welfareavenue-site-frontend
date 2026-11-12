@@ -1,29 +1,35 @@
-/* Welfare Avenue website: Google Analytics and Microsoft Clarity, only with the visitor's permission (Quebec Law 25).
-   Nothing is sent to Google and no analytics cookie is set until the visitor presses Accept.
-   The choice is kept in this browser (wa_consent = yes or no). Any element with data-wa-consent-open
+/* Welfare Avenue website: Google Analytics, Microsoft Clarity and the Meta pixel, only with the visitor's permission (Quebec Law 25).
+   Nothing is sent to Google, Microsoft or Meta and no cookie of theirs is set until the visitor chooses.
+   Two separate permissions: "Analytics only" (Google Analytics and Clarity) and "Accept all" (those plus the Meta pixel,
+   which measures which of our Meta ads lead to gifts and sign-ups). The choice is kept in this browser
+   (wa_consent = all, yes for analytics only, or no). Any element with data-wa-consent-open
    (the privacy pages have one) shows the banner again so people can change their mind. */
 (function () {
   'use strict';
   var ID = 'G-J4RXM9WJSW';
   /* Microsoft Clarity (heat maps and visit recordings, Steel 10/11/26): its project id, empty until the project exists. */
   var CLARITY = 'zbcoohovt6';
+  /* Meta pixel (Steel 11/11/26, for the gift drive and One Bag Challenge ads): its id from Meta Events Manager.
+     Empty means the pixel stays off. It loads only for visitors who press Accept all, and never receives names, emails or phone numbers. */
+  var PIXEL = '1871923090651607';
   var KEY = 'wa_consent';
   var FR = (document.documentElement.lang || '').toLowerCase().indexOf('fr') === 0;
   var T = FR ? {
     label: 'Témoins',
-    text: 'Nous aimerions utiliser les témoins de Google Analytics et de Microsoft Clarity pour compter les visites et voir comment nos pages sont utilisées (clics et défilement). Aucune publicité, et nous ne vendons jamais vos données.',
-    more: 'Confidentialité', href: '/fr/confidentialite/', yes: 'Accepter', no: 'Refuser'
+    text: 'Nous aimerions utiliser les témoins de Google Analytics et de Microsoft Clarity pour compter les visites et voir comment nos pages sont utilisées (clics et défilement). Avec « Tout accepter », le pixel de Meta mesure aussi quelles publicités de Welfare Avenue sur Facebook et Instagram mènent à des dons. Nous ne vendons jamais vos données.',
+    more: 'Confidentialité', href: '/fr/confidentialite/', yes: 'Tout accepter', some: 'Statistiques seulement', no: 'Refuser'
   } : {
     label: 'Cookies',
-    text: 'We would like to use cookies from Google Analytics and Microsoft Clarity to count visits and see how people use our pages (clicks and scrolling). No ads, and we never sell your data.',
-    more: 'Privacy', href: '/privacy/', yes: 'Accept', no: 'Decline'
+    text: 'We would like to use cookies from Google Analytics and Microsoft Clarity to count visits and see how people use our pages (clicks and scrolling). With Accept all, the Meta pixel also measures which Welfare Avenue ads on Facebook and Instagram lead to gifts. We never sell your data.',
+    more: 'Privacy', href: '/privacy/', yes: 'Accept all', some: 'Analytics only', no: 'Decline'
   };
 
   function get() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function set(v) { try { localStorage.setItem(KEY, v); } catch (e) { /* private mode: ask again next visit */ } }
 
-  var loaded = false;
-  function load() {
+  var loaded = false, adsOn = false;
+  function load(ads) {
+    if (ads) meta();
     if (loaded) return;
     loaded = true;
     window.dataLayer = window.dataLayer || [];
@@ -38,6 +44,24 @@
     track();
     clarity();
   }
+  /* The Meta pixel: page views, plus the conversions below (Donate, InitiateCheckout, Lead, CompleteRegistration). */
+  function meta() {
+    if (!PIXEL || adsOn) return;
+    adsOn = true;
+    if (!window.fbq) {
+      var n = window.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+      if (!window._fbq) window._fbq = n;
+      n.push = n; n.loaded = true; n.version = '2.0'; n.queue = [];
+      var f = document.createElement('script');
+      f.async = true;
+      f.src = 'https://connect.facebook.net/en_US/fbevents.js';
+      document.head.appendChild(f);
+    }
+    window.fbq('init', PIXEL);
+    window.fbq('track', 'PageView');
+    if (/^\/(fr\/paniers-cadeaux|gift-basket-drive)\//.test(location.pathname)) fb('ViewContent', { content_name: 'gift-basket-drive', content_category: 'campaign' });
+  }
+  function fb(name, p) { if (!adsOn) return; try { window.fbq('track', name, p || {}); } catch (e) { /* never break the page */ } }
   function clarity() {
     if (!CLARITY || window.clarity) return;
     window.clarity = function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
@@ -78,7 +102,9 @@
       var base = { click_text: label(el), click_area: areaOf(el) };
       if (el.hasAttribute('data-wa-donate') || /hub\.welfareavenue\.com\/give/.test(href)) {
         var amt = Number(el.getAttribute('data-wa-amount')) || undefined;
-        ev('donate_click', Object.assign({ donate_campaign: el.getAttribute('data-wa-campaign') || 'general', value: amt, currency: amt ? 'CAD' : undefined }, base));
+        var camp = el.getAttribute('data-wa-campaign') || 'general';
+        ev('donate_click', Object.assign({ donate_campaign: camp, value: amt, currency: amt ? 'CAD' : undefined }, base));
+        fb('InitiateCheckout', amt ? { content_name: camp, value: amt, currency: 'CAD' } : { content_name: camp });
         return;
       }
       if (inForm) return;
@@ -108,12 +134,21 @@
             var n = m.addedNodes[i];
             if (n.nodeType === 1 && n.classList.contains('waf-done')) {
               var name = formName(n);
-              ev(/newsletter|infolettre/.test(name) ? 'newsletter_signup' : 'form_sent', { form: name });
+              var news = /newsletter|infolettre/.test(name);
+              ev(news ? 'newsletter_signup' : 'form_sent', { form: name });
+              fb(news ? 'CompleteRegistration' : 'Lead', { content_name: name });
             }
           }
         });
       }).observe(document.body, { childList: true, subtree: true });
     }
+    /* A gift completed in the donation pop-up (the Hub's give/embed.js tells the page). The amount is sent only
+       if the Hub passes it along (detail.amount, in dollars). */
+    window.addEventListener('wa-donate-done', function (e) {
+      var d = (e && e.detail) || {}, camp = d.campaign || 'general', amt = Number(d.amount) || undefined;
+      ev('donate_done', { donate_campaign: camp, value: amt, currency: amt ? 'CAD' : undefined });
+      fb('Donate', amt ? { content_name: camp, value: amt, currency: 'CAD' } : { content_name: camp, currency: 'CAD' });
+    });
     /* How far down people read: once per page at 25, 50, 75 and 100 percent. */
     var marks = [25, 50, 75, 100], hit = {};
     function depth() {
@@ -146,7 +181,7 @@
     var host = location.hostname.replace(/^www\./, '');
     document.cookie.split(';').forEach(function (c) {
       var name = c.split('=')[0].trim();
-      if (!/^(_ga|_clck|_clsk|CLID|ANONCHK|MR|MUID|SM)$|^_ga/.test(name)) return;
+      if (!/^(_ga|_clck|_clsk|CLID|ANONCHK|MR|MUID|SM|_fbp|_fbc)$|^_ga/.test(name)) return;
       ['', '; domain=' + host, '; domain=.' + host].forEach(function (d) {
         document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/' + d;
       });
@@ -159,8 +194,8 @@
     var was = get();
     set(v);
     hide();
-    if (v === 'yes') { load(); return; }
-    if (was === 'yes' || loaded) { try { if (window.clarity) window.clarity('consent', false); } catch (e) { /* fine */ } clearCookies(); location.reload(); }
+    if (v === 'all' || (v === 'yes' && !adsOn)) { load(v === 'all'); return; }
+    if (was === 'yes' || was === 'all' || loaded) { try { if (window.clarity) window.clarity('consent', false); } catch (e) { /* fine */ } clearCookies(); location.reload(); }
   }
   function show() {
     if (!bar) {
@@ -181,10 +216,13 @@
       var no = document.createElement('button');
       no.type = 'button'; no.className = 'consent-no'; no.textContent = T.no;
       no.addEventListener('click', function () { choose('no'); });
+      var some = document.createElement('button');
+      some.type = 'button'; some.className = 'consent-no'; some.textContent = T.some;
+      some.addEventListener('click', function () { choose('yes'); });
       var yes = document.createElement('button');
       yes.type = 'button'; yes.className = 'consent-yes'; yes.textContent = T.yes;
-      yes.addEventListener('click', function () { choose('yes'); });
-      btns.appendChild(no); btns.appendChild(yes);
+      yes.addEventListener('click', function () { choose('all'); });
+      btns.appendChild(no); btns.appendChild(some); btns.appendChild(yes);
       wrap.appendChild(p); wrap.appendChild(btns);
       bar.appendChild(wrap);
       document.body.appendChild(bar);
@@ -194,7 +232,8 @@
 
   function start() {
     var c = get();
-    if (c === 'yes') load();
+    if (c === 'all') load(true);
+    else if (c === 'yes') load(false);
     else if (c !== 'no') show();
     document.addEventListener('click', function (e) {
       var t = e.target && e.target.closest ? e.target.closest('[data-wa-consent-open]') : null;
