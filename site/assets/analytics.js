@@ -1,31 +1,43 @@
-/* Welfare Avenue website: Google Analytics, Microsoft Clarity and the Meta pixel, only with the visitor's permission (Quebec Law 25).
-   Nothing is sent to Google, Microsoft or Meta and no cookie of theirs is set until the visitor chooses.
-   Two separate permissions: "Analytics only" (Google Analytics and Clarity) and "Accept all" (those plus the Meta pixel,
-   which measures which of our Meta ads lead to gifts and sign-ups). The choice is kept in this browser
-   (wa_consent = all, yes for analytics only, or no). Any element with data-wa-consent-open
-   (the privacy pages have one) shows the banner again so people can change their mind. */
+/* Welfare Avenue website: Google Analytics, Microsoft Clarity and the Meta pixel.
+   No banner (Steel, 12/11/26): all three are on for every visitor. The privacy pages say so and carry the off switch.
+   Before that date the site asked first (Quebec Law 25), so a choice someone already made still stands.
+   The choice is kept in this browser (wa_consent): no = nothing loads; yes = Google Analytics and Clarity without the
+   Meta pixel (which measures which of our Meta ads lead to gifts and sign-ups); all, or no choice yet = everything.
+   Two exceptions while there is no choice yet (see start()): a browser on European time, and a browser that cannot
+   keep a choice, get nothing until the visitor turns it on.
+   Any element with data-wa-consent-open (the privacy pages have one) opens the chooser. */
 (function () {
   'use strict';
   var ID = 'G-J4RXM9WJSW';
   /* Microsoft Clarity (heat maps and visit recordings, Steel 10/11/26): its project id, empty until the project exists. */
   var CLARITY = 'zbcoohovt6';
   /* Meta pixel (Steel 11/11/26, for the gift drive and One Bag Challenge ads): its id from Meta Events Manager.
-     Empty means the pixel stays off. It loads only for visitors who press Accept all, and never receives names, emails or phone numbers. */
+     Empty means the pixel stays off. It loads with the rest unless the visitor chose Analytics only or All off, and never receives names, emails or phone numbers. */
   var PIXEL = '1871923090651607';
   var KEY = 'wa_consent';
   var FR = (document.documentElement.lang || '').toLowerCase().indexOf('fr') === 0;
   var T = FR ? {
     label: 'Témoins',
-    text: 'Nous aimerions utiliser les témoins de Google Analytics et de Microsoft Clarity pour compter les visites et voir comment nos pages sont utilisées (clics et défilement). Avec « Tout accepter », le pixel de Meta mesure aussi quelles publicités de Welfare Avenue sur Facebook et Instagram mènent à des dons. Nous ne vendons jamais vos données.',
-    more: 'Confidentialité', href: '/fr/confidentialite/', yes: 'Tout accepter', some: 'Statistiques seulement', no: 'Refuser'
+    text: 'Google Analytics et Microsoft Clarity nous aident à compter les visites et à voir comment nos pages sont utilisées (clics et défilement), et le pixel de Meta mesure quelles publicités de Welfare Avenue sur Facebook et Instagram mènent à des dons. Choisissez ce qui reste activé dans ce navigateur. Nous ne vendons jamais vos données.',
+    more: 'Confidentialité', href: '/fr/confidentialite/', yes: 'Tout activer', some: 'Statistiques seulement', no: 'Tout désactiver'
   } : {
     label: 'Cookies',
-    text: 'We would like to use cookies from Google Analytics and Microsoft Clarity to count visits and see how people use our pages (clicks and scrolling). With Accept all, the Meta pixel also measures which Welfare Avenue ads on Facebook and Instagram lead to gifts. We never sell your data.',
-    more: 'Privacy', href: '/privacy/', yes: 'Accept all', some: 'Analytics only', no: 'Decline'
+    text: 'Google Analytics and Microsoft Clarity help us count visits and see how people use our pages (clicks and scrolling), and the Meta pixel measures which Welfare Avenue ads on Facebook and Instagram lead to gifts. Choose what stays on in this browser. We never sell your data.',
+    more: 'Privacy', href: '/privacy/', yes: 'All on', some: 'Analytics only', no: 'All off'
   };
 
   function get() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
-  function set(v) { try { localStorage.setItem(KEY, v); } catch (e) { /* private mode: ask again next visit */ } }
+  function set(v) { try { localStorage.setItem(KEY, v); } catch (e) { /* this browser keeps nothing: see canStore() */ } }
+  /* Can this browser keep a choice? If not, an "All off" would be forgotten on the next page, so nothing loads by default. */
+  function canStore() { try { localStorage.setItem(KEY + '_t', '1'); localStorage.removeItem(KEY + '_t'); return true; } catch (e) { return false; } }
+  /* A browser on European time. The EU, the UK and Switzerland need a real yes before any of this loads, and Google's
+     and Microsoft's own terms need one there too, so these visitors get nothing unless they turn it on themselves. */
+  function europe() {
+    try {
+      var z = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      return /^Europe\//.test(z) || /^Atlantic\/(Azores|Canary|Faroe|Faeroe|Madeira|Reykjavik|Jan_Mayen)$/.test(z) || z === 'Arctic/Longyearbyen';
+    } catch (e) { return false; }
+  }
 
   var loaded = false, adsOn = false;
   function load(ads) {
@@ -70,11 +82,38 @@
     c.src = 'https://www.clarity.ms/tag/' + CLARITY;
     document.head.appendChild(c);
     window.clarity('consent');
+    /* Labels on every Clarity visit, so heat maps and recordings can be split by language, campaign and kind of page. */
+    var path = location.pathname;
+    var camp = /^\/(fr\/paniers-cadeaux|gift-basket-drive)\//.test(path) ? 'gift-basket-drive'
+      : /one-?bag|un-sac/.test(path) ? 'one-bag' : 'none';
+    var kind = path === '/' || path === '/fr/' ? 'home'
+      : /benevol|volunteer/.test(path) ? 'volunteer'
+      : /don|give|donat/.test(path) ? 'give'
+      : /event|evenement/.test(path) ? 'events'
+      : /privacy|confidentialite/.test(path) ? 'privacy' : 'other';
+    cset('language', FR ? 'fr' : 'en');
+    cset('campaign', camp);
+    cset('page_kind', kind);
+    var q = new URLSearchParams(location.search);
+    if (q.get('utm_source')) cset('utm_source', q.get('utm_source').slice(0, 40));
+    if (q.get('utm_campaign')) cset('utm_campaign', q.get('utm_campaign').slice(0, 40));
+  }
+  function cset(k, v) { try { window.clarity('set', k, v); } catch (e) { /* never break the page */ } }
+  /* The moments that matter, marked on the Clarity recording so the team can filter to them
+     (for example: opened a sign-up form but never sent it). Visits with a gift or a sent form are kept first. */
+  var CLARITY_EVENTS = { donate_click: 1, donate_done: 1, signup_open: 1, form_start: 1, form_submit: 1, form_sent: 1,
+    newsletter_signup: 1, contact_click: 1, language_switch: 1 };
+  function cev(name) {
+    if (!window.clarity || !CLARITY_EVENTS[name]) return;
+    try {
+      window.clarity('event', name);
+      if (name === 'donate_click' || name === 'donate_done' || name === 'form_sent' || name === 'newsletter_signup') window.clarity('upgrade', name);
+    } catch (e) { /* never break the page */ }
   }
 
   /* Welfare Avenue's own events, on top of what Google measures by itself (page views, time on the site,
-     scrolling, outbound links, video plays, form starts). Only runs once the visitor has accepted. */
-  function ev(name, p) { try { window.gtag('event', name, p || {}); } catch (e) { /* never break the page */ } }
+     scrolling, outbound links, video plays, form starts). Runs whenever tracking is on. */
+  function ev(name, p) { try { window.gtag('event', name, p || {}); } catch (e) { /* never break the page */ } cev(name); }
   function label(el) { return (el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 100); }
   function formName(el) {
     var f = el.closest('[data-wa-form]');
@@ -232,9 +271,10 @@
 
   function start() {
     var c = get();
-    if (c === 'all') load(true);
-    else if (c === 'yes') load(false);
-    else if (c !== 'no') show();
+    /* No banner. A choice the visitor made always wins: no = nothing, yes = no Meta pixel, all = everything.
+       With no choice yet, everything loads, except on European time or where a choice cannot be kept. */
+    if (c === 'yes') load(false);
+    else if (c === 'all' || (c !== 'no' && canStore() && !europe())) load(true);
     document.addEventListener('click', function (e) {
       var t = e.target && e.target.closest ? e.target.closest('[data-wa-consent-open]') : null;
       if (!t) return;
