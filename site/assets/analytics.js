@@ -70,11 +70,38 @@
     c.src = 'https://www.clarity.ms/tag/' + CLARITY;
     document.head.appendChild(c);
     window.clarity('consent');
+    /* Labels on every Clarity visit, so heat maps and recordings can be split by language, campaign and kind of page. */
+    var path = location.pathname;
+    var camp = /^\/(fr\/paniers-cadeaux|gift-basket-drive)\//.test(path) ? 'gift-basket-drive'
+      : /one-?bag|un-sac/.test(path) ? 'one-bag' : 'none';
+    var kind = path === '/' || path === '/fr/' ? 'home'
+      : /benevol|volunteer/.test(path) ? 'volunteer'
+      : /don|give|donat/.test(path) ? 'give'
+      : /event|evenement/.test(path) ? 'events'
+      : /privacy|confidentialite/.test(path) ? 'privacy' : 'other';
+    cset('language', FR ? 'fr' : 'en');
+    cset('campaign', camp);
+    cset('page_kind', kind);
+    var q = new URLSearchParams(location.search);
+    if (q.get('utm_source')) cset('utm_source', q.get('utm_source').slice(0, 40));
+    if (q.get('utm_campaign')) cset('utm_campaign', q.get('utm_campaign').slice(0, 40));
+  }
+  function cset(k, v) { try { window.clarity('set', k, v); } catch (e) { /* never break the page */ } }
+  /* The moments that matter, marked on the Clarity recording so the team can filter to them
+     (for example: opened a sign-up form but never sent it). Visits with a gift or a sent form are kept first. */
+  var CLARITY_EVENTS = { donate_click: 1, donate_done: 1, signup_open: 1, form_start: 1, form_submit: 1, form_sent: 1,
+    newsletter_signup: 1, contact_click: 1, language_switch: 1 };
+  function cev(name) {
+    if (!window.clarity || !CLARITY_EVENTS[name]) return;
+    try {
+      window.clarity('event', name);
+      if (name === 'donate_click' || name === 'donate_done' || name === 'form_sent' || name === 'newsletter_signup') window.clarity('upgrade', name);
+    } catch (e) { /* never break the page */ }
   }
 
   /* Welfare Avenue's own events, on top of what Google measures by itself (page views, time on the site,
      scrolling, outbound links, video plays, form starts). Only runs once the visitor has accepted. */
-  function ev(name, p) { try { window.gtag('event', name, p || {}); } catch (e) { /* never break the page */ } }
+  function ev(name, p) { try { window.gtag('event', name, p || {}); } catch (e) { /* never break the page */ } cev(name); }
   function label(el) { return (el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 100); }
   function formName(el) {
     var f = el.closest('[data-wa-form]');
